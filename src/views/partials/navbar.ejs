@@ -1,0 +1,46 @@
+<nav class="top-navbar">
+
+  <div class="d-flex align-items-center gap-3">
+
+    <button
+      class="mobile-menu-btn"
+      onclick="toggleSidebar()"
+    >
+      <i class="bi bi-list"></i>
+    </button>
+
+    <h4 class="page-title">
+      Team Task Manager
+    </h4>
+
+  </div>
+
+  <div class="profile-section">
+
+    <% if (locals.user) { %>
+
+      <div class="d-flex align-items-center gap-3">
+
+        <div class="text-end">
+
+          <div class="fw-semibold">
+            <%= locals.user.email %>
+          </div>
+
+          <small class="text-muted">
+            <%= locals.user.role %>
+          </small>
+
+        </div>
+
+        <div class="profile-avatar">
+          <%= locals.user.email.charAt(0).toUpperCase() %>
+        </div>
+
+      </div>
+
+    <% } %>
+
+  </div>
+
+</nav>

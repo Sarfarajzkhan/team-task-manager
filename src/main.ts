@@ -1,10 +1,13 @@
 import {
+  RequestMethod,
   ValidationPipe,
 } from '@nestjs/common';
 
 import {
   NestFactory,
 } from '@nestjs/core';
+
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 import {
   DocumentBuilder,
@@ -19,10 +22,41 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+import expressLayouts from 'express-ejs-layouts';
 
-  app.use(helmet());
+import { join } from 'path';
+
+
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "'unsafe-eval'",
+            'cdn.jsdelivr.net',
+          ],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'cdn.jsdelivr.net',
+            'fonts.googleapis.com',
+          ],
+          fontSrc: [
+            "'self'",
+            'fonts.gstatic.com',
+            'cdn.jsdelivr.net',
+          ],
+          imgSrc: ["'self'", 'data:', 'cdn.jsdelivr.net'],
+        },
+      },
+    }),
+  );
 
   app.use(compression());
 
@@ -30,7 +64,37 @@ async function bootstrap() {
 
   app.enableCors();
 
-  app.setGlobalPrefix('api');
+  /*
+  ===========================================
+  STATIC FILES
+  ===========================================
+  */
+
+  app.useStaticAssets(
+    join(__dirname, '..', 'public'),
+  );
+
+  /*
+  ===========================================
+  EJS SETUP
+  ===========================================
+  */
+
+  app.setBaseViewsDir(
+    join(__dirname, 'views'),
+  );
+
+  app.setViewEngine('ejs');
+
+  app.use(expressLayouts);
+
+  app.set('layout', 'layouts/main');
+
+  /*
+  ===========================================
+  GLOBAL VALIDATION
+  ===========================================
+  */
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -39,13 +103,32 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.useGlobalFilters(
-  new HttpExceptionFilter(),
-);
 
-app.useGlobalInterceptors(
-  new ResponseInterceptor(),
-);
+  /*
+  ===========================================
+  GLOBAL FILTERS
+  ===========================================
+  */
+
+  app.useGlobalFilters(
+    new HttpExceptionFilter(),
+  );
+
+  /*
+  ===========================================
+  GLOBAL INTERCEPTORS
+  ===========================================
+  */
+
+  app.useGlobalInterceptors(
+    new ResponseInterceptor(),
+  );
+
+  /*
+  ===========================================
+  SWAGGER
+  ===========================================
+  */
 
   const config = new DocumentBuilder()
     .setTitle('Team Task Manager API')
@@ -56,10 +139,11 @@ app.useGlobalInterceptors(
     .addBearerAuth()
     .build();
 
-  const document = SwaggerModule.createDocument(
-    app,
-    config,
-  );
+  const document =
+    SwaggerModule.createDocument(
+      app,
+      config,
+    );
 
   SwaggerModule.setup(
     'api/docs',
@@ -67,14 +151,12 @@ app.useGlobalInterceptors(
     document,
   );
 
-  await app.listen(process.env.PORT || 5000);
-
-  console.log(
-    `Server running on: http://localhost:5000/api`,
+  await app.listen(
+    process.env.PORT || 5000,
   );
 
   console.log(
-    `Swagger Docs: http://localhost:5000/api/docs`,
+    `Server running on: http://localhost:${process.env.PORT || 5000}`,
   );
 }
 

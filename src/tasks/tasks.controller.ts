@@ -20,7 +20,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 
 import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 
-@Controller('tasks')
+@Controller('api/tasks')
 @UseGuards(JwtAuthGuard)
 export class TasksController {
   constructor(

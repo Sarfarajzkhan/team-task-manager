@@ -24,15 +24,29 @@ export class DashboardService {
     private readonly projectRepository: Repository<Project>,
   ) {}
 
-  async getDashboard(currentUser: User) {
+  async getDashboardData(
+    currentUser: User,
+  ) {
     if (currentUser.role === Role.ADMIN) {
-      return this.getAdminDashboard();
+      return this.getAdminDashboard(
+        currentUser,
+      );
     }
 
-    return this.getMemberDashboard(currentUser);
+    return this.getMemberDashboard(
+      currentUser,
+    );
   }
 
-  private async getAdminDashboard() {
+  /*
+  ===========================================
+  ADMIN DASHBOARD
+  ===========================================
+  */
+
+  private async getAdminDashboard(
+    currentUser: User,
+  ) {
     const [
       totalTasks,
       completedTasks,
@@ -56,7 +70,8 @@ export class DashboardService {
 
       this.taskRepository.count({
         where: {
-          status: TaskStatus.IN_PROGRESS,
+          status:
+            TaskStatus.IN_PROGRESS,
         },
       }),
 
@@ -69,36 +84,64 @@ export class DashboardService {
         .where('task.dueDate < :today', {
           today: new Date(),
         })
-        .andWhere('task.status != :doneStatus', {
-          doneStatus: TaskStatus.DONE,
-        })
-        .getCount();
+        .andWhere(
+          'task.status != :doneStatus',
+          {
+            doneStatus:
+              TaskStatus.DONE,
+          },
+        )
+        .getMany();
+
+    const recentTasks =
+      await this.taskRepository.find({
+        order: {
+          createdAt: 'DESC',
+        },
+
+        take: 5,
+      });
 
     const completionRate =
       totalTasks === 0
         ? 0
         : Math.round(
-            (completedTasks / totalTasks) * 100,
+            (completedTasks /
+              totalTasks) *
+              100,
           );
 
     return {
-      role: Role.ADMIN,
+      role: currentUser.role,
 
-      totalTasks,
+      stats: {
+        totalTasks,
 
-      completedTasks,
+        completedTasks,
 
-      pendingTasks,
+        pendingTasks,
 
-      inProgressTasks,
+        inProgressTasks,
+
+        overdueTasksCount:
+          overdueTasks.length,
+
+        totalProjects,
+
+        completionRate,
+      },
 
       overdueTasks,
 
-      totalProjects,
-
-      completionRate: `${completionRate}%`,
+      recentTasks,
     };
   }
+
+  /*
+  ===========================================
+  MEMBER DASHBOARD
+  ===========================================
+  */
 
   private async getMemberDashboard(
     currentUser: User,
@@ -122,6 +165,7 @@ export class DashboardService {
           assignedTo: {
             id: currentUser.id,
           },
+
           status: TaskStatus.DONE,
         },
       }),
@@ -131,6 +175,7 @@ export class DashboardService {
           assignedTo: {
             id: currentUser.id,
           },
+
           status: TaskStatus.TODO,
         },
       }),
@@ -140,7 +185,9 @@ export class DashboardService {
           assignedTo: {
             id: currentUser.id,
           },
-          status: TaskStatus.IN_PROGRESS,
+
+          status:
+            TaskStatus.IN_PROGRESS,
         },
       }),
     ]);
@@ -148,39 +195,76 @@ export class DashboardService {
     const overdueTasks =
       await this.taskRepository
         .createQueryBuilder('task')
-        .leftJoin('task.assignedTo', 'assignedTo')
-        .where('assignedTo.id = :userId', {
-          userId: currentUser.id,
-        })
-        .andWhere('task.dueDate < :today', {
-          today: new Date(),
-        })
-        .andWhere('task.status != :doneStatus', {
-          doneStatus: TaskStatus.DONE,
-        })
-        .getCount();
+        .leftJoin(
+          'task.assignedTo',
+          'assignedTo',
+        )
+        .where(
+          'assignedTo.id = :userId',
+          {
+            userId: currentUser.id,
+          },
+        )
+        .andWhere(
+          'task.dueDate < :today',
+          {
+            today: new Date(),
+          },
+        )
+        .andWhere(
+          'task.status != :doneStatus',
+          {
+            doneStatus:
+              TaskStatus.DONE,
+          },
+        )
+        .getMany();
+
+    const recentTasks =
+      await this.taskRepository.find({
+        where: {
+          assignedTo: {
+            id: currentUser.id,
+          },
+        },
+
+        order: {
+          createdAt: 'DESC',
+        },
+
+        take: 5,
+      });
 
     const completionRate =
       totalTasks === 0
         ? 0
         : Math.round(
-            (completedTasks / totalTasks) * 100,
+            (completedTasks /
+              totalTasks) *
+              100,
           );
 
     return {
-      role: Role.MEMBER,
+      role: currentUser.role,
 
-      totalTasks,
+      stats: {
+        totalTasks,
 
-      completedTasks,
+        completedTasks,
 
-      pendingTasks,
+        pendingTasks,
 
-      inProgressTasks,
+        inProgressTasks,
+
+        overdueTasksCount:
+          overdueTasks.length,
+
+        completionRate,
+      },
 
       overdueTasks,
 
-      completionRate: `${completionRate}%`,
+      recentTasks,
     };
   }
 }

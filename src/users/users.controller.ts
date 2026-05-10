@@ -17,7 +17,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 import { Role } from '../common/enums/role.enum';
 
-@Controller('users')
+@Controller('api/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(

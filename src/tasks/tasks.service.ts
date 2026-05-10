@@ -200,4 +200,38 @@ export class TasksService {
 
     return queryBuilder.getMany();
   }
+
+  async getTasksForFrontend(
+  currentUser: User,
+) {
+  if (currentUser.role === Role.ADMIN) {
+    return this.taskRepository.find({
+      relations: [
+        'assignedTo',
+        'project',
+      ],
+
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  return this.taskRepository.find({
+    where: {
+      assignedTo: {
+        id: currentUser.id,
+      },
+    },
+
+    relations: [
+      'assignedTo',
+      'project',
+    ],
+
+    order: {
+      createdAt: 'DESC',
+    },
+  });
+}
 }

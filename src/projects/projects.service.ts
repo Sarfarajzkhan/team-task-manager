@@ -4,19 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { InjectRepository } from '@nestjs/typeorm';
-
 import { Repository } from 'typeorm';
 
 import { Project } from './entities/project.entity';
 import { ProjectMember } from './entities/project-member.entity';
-
 import { User } from '../users/entities/user.entity';
-
 import { CreateProjectDto } from './dto/create-project.dto';
 import { AddProjectMemberDto } from './dto/add-project-member.dto';
-
 import { Role } from '../common/enums/role.enum';
 
 @Injectable()
@@ -43,6 +38,12 @@ export class ProjectsService {
 
     await this.projectRepository.save(project);
 
+    // Automatically add the creator as a project member
+    await this.projectMemberRepository.insert({
+      user: { id: currentUser.id },
+      project: { id: project.id },
+    });
+
     return {
       message: 'Project created successfully',
       project,
@@ -65,7 +66,7 @@ export class ProjectsService {
           id: currentUser.id,
         },
       },
-      relations: ['project'],
+      relations: ['project', 'project.members', 'project.members.user'],
     });
 
     return memberships.map(
@@ -126,13 +127,10 @@ export class ProjectsService {
       );
     }
 
-    const projectMember =
-      this.projectMemberRepository.create({
-        user,
-        project,
-      });
-
-    await this.projectMemberRepository.save(projectMember);
+    await this.projectMemberRepository.insert({
+      user: { id: user.id },
+      project: { id: project.id },
+    });
 
     return {
       message: 'Member added successfully',
@@ -187,5 +185,45 @@ export class ProjectsService {
     return {
       message: 'Member removed successfully',
     };
+  }
+
+  async getProjectById(
+    projectId: string,
+  ) {
+    const project =
+      await this.projectRepository.findOne({
+        where: {
+          id: projectId,
+        },
+        relations: {
+          members: {
+            user: true,
+          },
+        },
+      });
+
+    if (!project) {
+      throw new NotFoundException(
+        'Project not found',
+      );
+    }
+
+    return project;
+  }
+
+  async getProjectsWithStats() {
+    const projects =
+      await this.projectRepository.find({
+        relations: [
+          'members',
+          'members.user',
+        ],
+
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+    return projects;
   }
 }

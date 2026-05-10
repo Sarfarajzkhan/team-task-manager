@@ -1,0 +1,118 @@
+<div class="project-details-header">
+
+  <div>
+
+    <h2 class="dashboard-title">
+      <%= project.name %>
+    </h2>
+
+    <p class="dashboard-subtitle">
+      <%= project.description %>
+    </p>
+
+  </div>
+
+</div>
+
+<div class="row mt-4">
+
+  <!-- Members -->
+
+  <div class="col-lg-4">
+
+    <div class="dashboard-card">
+
+      <h5 class="mb-4">
+        Team Members
+      </h5>
+
+      <% if (
+      project.members.length > 0
+      ) { %>
+
+        <% project.members.forEach(member => { %>
+
+          <div class="member-item">
+
+            <div class="member-avatar">
+              <%= (member.user && member.user.email)
+              ? member.user.email.charAt(0).toUpperCase()
+              : '?' %>
+            </div>
+
+            <div>
+
+              <strong>
+                <%= (member.user && member.user.name) ? member.user.name : 'Unknown User' %>
+              </strong>
+
+              <div class="text-muted">
+                <%= (member.user && member.user.email) ? member.user.email : 'No Email' %>
+              </div>
+
+            </div>
+
+          </div>
+
+        <% }) %>
+
+      <% } else { %>
+
+        <p class="text-muted">
+          No members added.
+        </p>
+
+      <% } %>
+
+    </div>
+
+  </div>
+
+  <!-- Project Stats -->
+
+  <div class="col-lg-8">
+
+    <div class="dashboard-card">
+
+      <h5 class="mb-4">
+        Project Overview
+      </h5>
+
+      <div class="row g-4">
+
+        <div class="col-md-4">
+
+          <div class="mini-stat-card">
+
+            <h6>Members</h6>
+
+            <h3>
+              <%= project.members.length %>
+            </h3>
+
+          </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+          <div class="mini-stat-card">
+
+            <h6>Created</h6>
+
+            <h6>
+              <%= new Date(project.createdAt)
+              .toLocaleDateString() %>
+            </h6>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

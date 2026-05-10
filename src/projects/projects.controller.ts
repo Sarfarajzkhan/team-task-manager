@@ -20,7 +20,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 
 import { AddProjectMemberDto } from './dto/add-project-member.dto';
 
-@Controller('projects')
+@Controller('api/projects')
 @UseGuards(JwtAuthGuard)
 export class ProjectsController {
   constructor(

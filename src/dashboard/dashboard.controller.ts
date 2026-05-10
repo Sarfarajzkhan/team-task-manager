@@ -12,7 +12,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 import { User } from '../users/entities/user.entity';
 
-@Controller('dashboard')
+@Controller('api/dashboard')
 @UseGuards(JwtAuthGuard)
 export class DashboardController {
   constructor(
@@ -23,7 +23,7 @@ export class DashboardController {
   getDashboard(
     @CurrentUser() currentUser: User,
   ) {
-    return this.dashboardService.getDashboard(
+    return this.dashboardService.getDashboardData(
       currentUser,
     );
   }

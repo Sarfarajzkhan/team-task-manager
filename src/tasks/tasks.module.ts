@@ -27,5 +27,7 @@ import { ProjectMember } from '../projects/entities/project-member.entity';
   controllers: [TasksController],
 
   providers: [TasksService],
+
+  exports: [TasksService],
 })
 export class TasksModule {}

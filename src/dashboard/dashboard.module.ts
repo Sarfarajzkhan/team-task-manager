@@ -21,5 +21,7 @@ import { Project } from '../projects/entities/project.entity';
   controllers: [DashboardController],
 
   providers: [DashboardService],
+
+  exports: [DashboardService],
 })
 export class DashboardModule {}

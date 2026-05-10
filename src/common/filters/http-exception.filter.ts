@@ -22,6 +22,10 @@ export class HttpExceptionFilter
 
     const request = ctx.getRequest<Request>();
 
+    if (!(exception instanceof HttpException)) {
+      console.error('Unhandled Exception:', exception);
+    }
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
