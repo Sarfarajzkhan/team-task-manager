@@ -1,3 +1,26 @@
+<script>
+// Show redirect-based flash messages
+const urlParams = new URLSearchParams(window.location.search);
+const pageError = urlParams.get('error');
+const pageSuccess = urlParams.get('success');
+document.addEventListener('DOMContentLoaded', function() {
+  if (pageError) {
+    const mainContent = document.querySelector('.main-content') || document.body;
+    const el = document.createElement('div');
+    el.className = 'alert alert-danger alert-dismissible fade show mb-3';
+    el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + decodeURIComponent(pageError) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    mainContent.prepend(el);
+  }
+  if (pageSuccess) {
+    const mainContent = document.querySelector('.main-content') || document.body;
+    const el = document.createElement('div');
+    el.className = 'alert alert-success alert-dismissible fade show mb-3';
+    el.innerHTML = '<i class="bi bi-check-circle me-2"></i>' + decodeURIComponent(pageSuccess) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    mainContent.prepend(el);
+  }
+});
+</script>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
 
   <div>
@@ -12,14 +35,16 @@
 
   </div>
 
-  <button
-    class="btn btn-primary"
-    data-bs-toggle="modal"
-    data-bs-target="#createProjectModal"
-  >
-    <i class="bi bi-plus-lg"></i>
-    Create Project
-  </button>
+  <% if (locals.user && locals.user.role === 'ADMIN') { %>
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#createProjectModal"
+    >
+      <i class="bi bi-plus-lg"></i>
+      Create Project
+    </button>
+  <% } %>
 
 </div>
 

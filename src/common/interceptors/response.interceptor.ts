@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 
 import { Observable } from 'rxjs';
-
 import { map } from 'rxjs/operators';
 
 @Injectable()
@@ -15,17 +14,33 @@ export class ResponseInterceptor
 {
   intercept(
     context: ExecutionContext,
-
     next: CallHandler,
   ): Observable<any> {
+    const response = context.switchToHttp().getResponse();
+
     return next.handle().pipe(
-      map((data) => ({
-        success: true,
+      map((data) => {
+        // Skip interceptor for SSR routes that already sent a response
+        // (render, redirect, or any response already flushed)
+        if (response.headersSent) {
+          return data;
+        }
 
-        timestamp: new Date().toISOString(),
+        // Only wrap plain object/data API responses
+        if (
+          data === undefined ||
+          data === null ||
+          typeof data === 'string'
+        ) {
+          return data;
+        }
 
-        data,
-      })),
+        return {
+          success: true,
+          timestamp: new Date().toISOString(),
+          data,
+        };
+      }),
     );
   }
 }

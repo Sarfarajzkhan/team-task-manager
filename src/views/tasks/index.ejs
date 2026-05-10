@@ -1,3 +1,19 @@
+<% const errorMsg = (typeof locals.error !== 'undefined' && locals.error) ? locals.error : null; %>
+<% const successMsg = (typeof locals.success !== 'undefined' && locals.success) ? locals.success : null; %>
+
+<% if (errorMsg) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i><%= errorMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+<% if (successMsg) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i><%= successMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
 
   <div>
@@ -12,14 +28,16 @@
 
   </div>
 
-  <button
-    class="btn btn-primary"
-    data-bs-toggle="modal"
-    data-bs-target="#createTaskModal"
-  >
-    <i class="bi bi-plus-lg"></i>
-    Create Task
-  </button>
+  <% if (locals.user && locals.user.role === 'ADMIN') { %>
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#createTaskModal"
+    >
+      <i class="bi bi-plus-lg"></i>
+      Create Task
+    </button>
+  <% } %>
 
 </div>
 
@@ -62,14 +80,22 @@
                 <strong>
                   <%= task.title %>
                 </strong>
+                <% if (task.description) { %>
+                  <div class="text-muted" style="font-size:12px; margin-top:2px;"><%= task.description %></div>
+                <% } %>
               </td>
 
               <td>
-                <%= task.project.name %>
+                <%= task.project ? task.project.name : 'N/A' %>
               </td>
 
               <td>
-                <%= task.assignedTo.name %>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="member-avatar" style="width:32px;height:32px;font-size:12px;">
+                    <%= task.assignedTo ? task.assignedTo.name.charAt(0).toUpperCase() : '?' %>
+                  </div>
+                  <%= task.assignedTo ? task.assignedTo.name : 'Unassigned' %>
+                </div>
               </td>
 
               <td>
@@ -102,54 +128,56 @@
 
               <td>
 
-                <%= new Date(task.dueDate)
-                .toLocaleDateString() %>
+                <%= new Date(task.dueDate).toLocaleDateString() %>
+                <% if (new Date(task.dueDate) < new Date() && task.status !== 'DONE') { %>
+                  <span class="badge bg-danger ms-1" style="font-size:10px;">OVERDUE</span>
+                <% } %>
 
               </td>
 
               <td>
 
-                <form
-                  action="/tasks/<%= task.id %>/status"
-                  method="POST"
-                >
+                <% const canUpdate = locals.user && (locals.user.role === 'ADMIN' || (task.assignedTo && task.assignedTo.id === locals.user.id)); %>
 
-                  <select
-                    name="status"
-                    class="form-select form-select-sm"
-                    onchange="this.form.submit()"
+                <% if (canUpdate) { %>
+                  <form
+                    action="/tasks/<%= task.id %>/status"
+                    method="POST"
                   >
 
-                    <option
-                      value="TODO"
-                      <%= task.status === 'TODO'
-                      ? 'selected'
-                      : '' %>
+                    <select
+                      name="status"
+                      class="form-select form-select-sm"
+                      onchange="this.form.submit()"
                     >
-                      TODO
-                    </option>
 
-                    <option
-                      value="IN_PROGRESS"
-                      <%= task.status === 'IN_PROGRESS'
-                      ? 'selected'
-                      : '' %>
-                    >
-                      IN PROGRESS
-                    </option>
+                      <option
+                        value="TODO"
+                        <%= task.status === 'TODO' ? 'selected' : '' %>
+                      >
+                        📋 TODO
+                      </option>
 
-                    <option
-                      value="DONE"
-                      <%= task.status === 'DONE'
-                      ? 'selected'
-                      : '' %>
-                    >
-                      DONE
-                    </option>
+                      <option
+                        value="IN_PROGRESS"
+                        <%= task.status === 'IN_PROGRESS' ? 'selected' : '' %>
+                      >
+                        🔄 IN PROGRESS
+                      </option>
 
-                  </select>
+                      <option
+                        value="DONE"
+                        <%= task.status === 'DONE' ? 'selected' : '' %>
+                      >
+                        ✅ DONE
+                      </option>
 
-                </form>
+                    </select>
+
+                  </form>
+                <% } else { %>
+                  <span class="text-muted" style="font-size:12px;">View Only</span>
+                <% } %>
 
               </td>
 
@@ -171,6 +199,14 @@
                   No Tasks Found
                 </h4>
 
+                <p>
+                  <% if (locals.user && locals.user.role === 'ADMIN') { %>
+                    Click "Create Task" to add your first task.
+                  <% } else { %>
+                    No tasks have been assigned to you yet.
+                  <% } %>
+                </p>
+
               </div>
 
             </td>
@@ -187,7 +223,9 @@
 
 </div>
 
-<!-- Create Task Modal -->
+<!-- Create Task Modal (Admin Only) -->
+
+<% if (locals.user && locals.user.role === 'ADMIN') { %>
 
 <div
   class="modal fade"
@@ -216,6 +254,7 @@
       <form
         action="/tasks/create"
         method="POST"
+        id="createTaskForm"
       >
 
         <div class="modal-body">
@@ -224,14 +263,15 @@
 
             <div class="col-md-6 mb-3">
 
-              <label>
-                Task Title
+              <label class="form-label fw-semibold">
+                Task Title <span class="text-danger">*</span>
               </label>
 
               <input
                 type="text"
                 name="title"
                 class="form-control"
+                placeholder="Enter task title"
                 required
               />
 
@@ -239,15 +279,18 @@
 
             <div class="col-md-6 mb-3">
 
-              <label>
-                Project
+              <label class="form-label fw-semibold">
+                Project <span class="text-danger">*</span>
               </label>
 
               <select
                 name="projectId"
                 class="form-select"
+                id="projectSelect"
                 required
+                onchange="loadProjectMembers(this.value)"
               >
+                <option value="" disabled selected>-- Select a project --</option>
 
                 <% projects.forEach(project => { %>
 
@@ -267,14 +310,15 @@
 
           <div class="mb-3">
 
-            <label>
+            <label class="form-label fw-semibold">
               Description
             </label>
 
             <textarea
               name="description"
-              rows="4"
+              rows="3"
               class="form-control"
+              placeholder="Optional task description..."
             ></textarea>
 
           </div>
@@ -283,7 +327,7 @@
 
             <div class="col-md-4 mb-3">
 
-              <label>
+              <label class="form-label fw-semibold">
                 Priority
               </label>
 
@@ -292,17 +336,9 @@
                 class="form-select"
               >
 
-                <option value="LOW">
-                  LOW
-                </option>
-
-                <option value="MEDIUM">
-                  MEDIUM
-                </option>
-
-                <option value="HIGH">
-                  HIGH
-                </option>
+                <option value="LOW">🟦 LOW</option>
+                <option value="MEDIUM" selected>🟨 MEDIUM</option>
+                <option value="HIGH">🟥 HIGH</option>
 
               </select>
 
@@ -310,33 +346,27 @@
 
             <div class="col-md-4 mb-3">
 
-              <label>
-                Assign User
+              <label class="form-label fw-semibold">
+                Assign To <span class="text-danger">*</span>
               </label>
 
               <select
                 name="assignedToUserId"
                 class="form-select"
+                id="assigneeSelect"
+                required
               >
-
-                <% users.forEach(user => { %>
-
-                  <option
-                    value="<%= user.id %>"
-                  >
-                    <%= user.name %>
-                  </option>
-
-                <% }) %>
-
+                <option value="" disabled selected>-- Select project first --</option>
               </select>
+
+              <small class="text-muted">Only members of the selected project are listed.</small>
 
             </div>
 
             <div class="col-md-4 mb-3">
 
-              <label>
-                Due Date
+              <label class="form-label fw-semibold">
+                Due Date <span class="text-danger">*</span>
               </label>
 
               <input
@@ -344,6 +374,7 @@
                 name="dueDate"
                 class="form-control"
                 required
+                min="<%= new Date().toISOString().split('T')[0] %>"
               />
 
             </div>
@@ -355,10 +386,19 @@
         <div class="modal-footer">
 
           <button
+            type="button"
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+
+          <button
             type="submit"
             class="btn btn-primary"
+            id="submitTaskBtn"
           >
-            Create Task
+            <i class="bi bi-plus-lg me-1"></i>Create Task
           </button>
 
         </div>
@@ -370,3 +410,29 @@
   </div>
 
 </div>
+
+<% } %>
+
+<script>
+// Read query params and show alerts via JS (for redirect-based flash messages)
+const urlParams = new URLSearchParams(window.location.search);
+const pageError = urlParams.get('error');
+const pageSuccess = urlParams.get('success');
+
+if (pageError && !document.querySelector('.alert-danger')) {
+  const mainContent = document.querySelector('.main-content') || document.body;
+  const el = document.createElement('div');
+  el.className = 'alert alert-danger alert-dismissible fade show';
+  el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + decodeURIComponent(pageError) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  mainContent.prepend(el);
+}
+if (pageSuccess && !document.querySelector('.alert-success')) {
+  const mainContent = document.querySelector('.main-content') || document.body;
+  const el = document.createElement('div');
+  el.className = 'alert alert-success alert-dismissible fade show';
+  el.innerHTML = '<i class="bi bi-check-circle me-2"></i>' + decodeURIComponent(pageSuccess) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  mainContent.prepend(el);
+}
+
+}
+</script>

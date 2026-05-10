@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Post,
-  Render,
   Req,
   Res,
   Param,
@@ -48,17 +47,15 @@ export class WebController {
   */
 
   @Get('/login')
-  @Render('auth/login')
-  loginPage(@Req() req: Request) {
+  loginPage(@Req() req: Request, @Res() res: Response) {
     const token = req.cookies?.token;
-
     if (token) {
-      return {
-        redirect: '/',
-      };
+      return res.redirect('/');
     }
-
-    return {};
+    return res.render('auth/login', {
+      layout: 'layouts/auth-layout',
+      error: null,
+    });
   }
 
   /*
@@ -68,17 +65,15 @@ export class WebController {
   */
 
   @Get('/signup')
-  @Render('auth/signup')
-  signupPage(@Req() req: Request) {
+  signupPage(@Req() req: Request, @Res() res: Response) {
     const token = req.cookies?.token;
-
     if (token) {
-      return {
-        redirect: '/',
-      };
+      return res.redirect('/');
     }
-
-    return {};
+    return res.render('auth/signup', {
+      layout: 'layouts/auth-layout',
+      error: null,
+    });
   }
 
   /*
@@ -235,8 +230,8 @@ async projectsPage(
     'projects/index',
     {
       title: 'Projects',
-
       projects,
+      user,
     },
   );
 }
@@ -249,10 +244,8 @@ CREATE PROJECT
 
 @Post('/projects/create')
 async createProject(
-  @Body() body: CreateProjectDto,
-
+  @Body() body: any,
   @Req() req: Request,
-
   @Res() res: Response,
 ) {
   const user =
@@ -262,17 +255,21 @@ async createProject(
     return res.redirect('/login');
   }
 
+  // Only admins can create projects
+  if (user.role !== 'ADMIN') {
+    return res.redirect('/projects?error=Only+admins+can+create+projects');
+  }
+
   try {
     await this.projectsService.createProject(
-      body,
+      body as CreateProjectDto,
       user,
     );
 
-    return res.redirect('/projects');
+    return res.redirect('/projects?success=Project+created+successfully');
   } catch (error) {
-    console.log(error);
-
-    return res.redirect('/projects');
+    console.error('Create Project Error:', error);
+    return res.redirect('/projects?error=' + encodeURIComponent(error.message));
   }
 }
 
@@ -303,17 +300,59 @@ async projectDetails(
         id,
       );
 
+    // For admin: load all users so they can add members
+    let allUsers: any[] = [];
+    if (user.role === 'ADMIN') {
+      const result = await this.usersService.findAll(1, 200);
+      allUsers = result.users;
+    }
+
     return res.render(
       'projects/details',
       {
         title: 'Project Details',
-
         project,
+        user,
+        allUsers,
+        error: (req as any).query?.error || null,
+        success: (req as any).query?.success || null,
       },
     );
   } catch (error) {
     console.error('Project Details Error:', error);
     return res.status(500).send(error.message);
+  }
+}
+
+/*
+===========================================
+ADD MEMBER TO PROJECT
+===========================================
+*/
+
+@Post('/projects/:id/add-member')
+async addMemberToProject(
+  @Param('id') id: string,
+  @Body() body: any,
+  @Req() req: Request,
+  @Res() res: Response,
+) {
+  const user = (req as any).res.locals.user;
+  if (!user) return res.redirect('/login');
+
+  if (user.role !== 'ADMIN') {
+    return res.redirect(`/projects/${id}`);
+  }
+
+  try {
+    await this.projectsService.addMember(
+      id,
+      { userId: body.userId },
+      user,
+    );
+    return res.redirect(`/projects/${id}?success=Member+added+successfully`);
+  } catch (error) {
+    return res.redirect(`/projects/${id}?error=${encodeURIComponent(error.message)}`);
   }
 }
 
@@ -354,12 +393,12 @@ async tasksPage(
     'tasks/index',
     {
       title: 'Tasks',
-
       tasks,
-
       projects,
-
       users: users.users,
+      user,
+      error: (req as any).query?.error || null,
+      success: (req as any).query?.success || null,
     },
   );
 }
@@ -372,30 +411,24 @@ CREATE TASK
 
 @Post('/tasks/create')
 async createTask(
-  @Body() body: CreateTaskDto,
-
+  @Body() body: any,
   @Req() req: Request,
-
   @Res() res: Response,
 ) {
-  const user =
-    (req as any).res.locals.user;
+  const user = (req as any).res.locals.user;
+  if (!user) return res.redirect('/login');
 
-  if (!user) {
-    return res.redirect('/login');
+  // Only admins can create tasks
+  if (user.role !== 'ADMIN') {
+    return res.redirect('/tasks?error=Only+admins+can+create+tasks');
   }
 
   try {
-    await this.tasksService.createTask(
-      body,
-      user,
-    );
-
-    return res.redirect('/tasks');
+    await this.tasksService.createTask(body as CreateTaskDto, user);
+    return res.redirect('/tasks?success=Task+created+successfully');
   } catch (error) {
-    console.log(error);
-
-    return res.redirect('/tasks');
+    console.error('Create Task Error:', error);
+    return res.redirect('/tasks?error=' + encodeURIComponent(error.message));
   }
 }
 
@@ -408,32 +441,53 @@ UPDATE TASK STATUS
 @Post('/tasks/:id/status')
 async updateTaskStatus(
   @Param('id') id: string,
-
-  @Body() body: UpdateTaskStatusDto,
-
+  @Body() body: any,
   @Req() req: Request,
-
   @Res() res: Response,
 ) {
-  const user =
-    (req as any).res.locals.user;
-
-  if (!user) {
-    return res.redirect('/login');
-  }
+  const user = (req as any).res.locals.user;
+  if (!user) return res.redirect('/login');
 
   try {
     await this.tasksService.updateTaskStatus(
       id,
-      body,
+      body as UpdateTaskStatusDto,
       user,
     );
-
-    return res.redirect('/tasks');
+    return res.redirect('/tasks?success=Status+updated');
   } catch (error) {
-    console.log(error);
+    console.error('Update Task Status Error:', error);
+    return res.redirect('/tasks?error=' + encodeURIComponent(error.message));
+  }
+}
 
-    return res.redirect('/tasks');
+/*
+===========================================
+GET PROJECT MEMBERS (JSON for dynamic dropdown)
+===========================================
+*/
+
+@Get('/api/web/project-members/:projectId')
+async getProjectMembers(
+  @Param('projectId') projectId: string,
+  @Req() req: Request,
+  @Res() res: Response,
+) {
+  const user = (req as any).res.locals.user;
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const project = await this.projectsService.getProjectById(projectId);
+    const members = project.members.map(m => ({
+      id: m.user.id,
+      name: m.user.name,
+      email: m.user.email,
+    }));
+    res.json(members);
+    return;
+  } catch (error) {
+    res.status(404).json({ error: 'Project not found' });
+    return;
   }
 }
 

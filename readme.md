@@ -1,98 +1,294 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🚀 Team Task Manager
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A full-stack collaborative **project & task management** web application built with **NestJS**, **TypeORM**, **PostgreSQL**, and **EJS** server-side rendering. It supports role-based access for **Admins** and **Members**, with a clean, responsive UI.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 📸 Features Overview
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Feature | Admin | Member |
+|---|:---:|:---:|
+| Register & Login | ✅ | ✅ |
+| View Dashboard (stats, charts) | ✅ | ✅ |
+| Create Projects | ✅ | ❌ |
+| View Projects (own/assigned) | ✅ | ✅ |
+| Add Members to Projects | ✅ | ❌ |
+| Create Tasks (project members only) | ✅ | ❌ |
+| View Assigned Tasks | ✅ | ✅ |
+| Update Task Status | ✅ | ✅ (own tasks) |
+| View Overdue Tasks | ✅ | ✅ (own tasks) |
+| REST API (Swagger Docs) | ✅ | ✅ |
 
-## Project setup
+---
 
-```bash
-$ npm install
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | [NestJS](https://nestjs.com/) v11 |
+| **Language** | TypeScript |
+| **Database** | PostgreSQL (via [Neon](https://neon.tech) serverless) |
+| **ORM** | TypeORM v0.3 |
+| **Templating** | EJS + express-ejs-layouts |
+| **Authentication** | JWT (via cookie) + Passport |
+| **Validation** | class-validator + class-transformer |
+| **API Docs** | Swagger / OpenAPI |
+| **Security** | Helmet (CSP), bcrypt, cookie-parser |
+| **Frontend** | Bootstrap 5.3, Bootstrap Icons, Chart.js, Toastify |
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── auth/               # JWT auth, login, signup, guards
+├── common/
+│   ├── enums/          # Role, TaskStatus, Priority enums
+│   ├── filters/        # Global HTTP exception filter
+│   ├── guards/         # JWT & Roles guards
+│   ├── interceptors/   # Response wrapper interceptor
+│   └── middleware/     # Auth cookie middleware (SSR)
+├── config/             # TypeORM database configuration
+├── dashboard/          # Dashboard stats & analytics service
+├── projects/           # Projects CRUD, member management
+├── tasks/              # Task creation, status updates
+├── users/              # User management
+├── web/                # SSR web controller (EJS pages)
+└── views/
+    ├── auth/           # Login & Signup pages
+    ├── dashboard/      # Dashboard page
+    ├── layouts/        # main.ejs & auth-layout.ejs
+    ├── partials/       # head, navbar, sidebar, footer, scripts
+    ├── projects/       # Projects list & details pages
+    └── tasks/          # Tasks page
+
+public/
+├── css/style.css       # Custom stylesheet
+└── js/main.js          # Frontend JS (sidebar, toast, members loader)
 ```
 
-## Compile and run the project
+---
+
+## ⚙️ Prerequisites
+
+- [Node.js](https://nodejs.org/) v18+
+- [npm](https://www.npmjs.com/) v9+
+- A PostgreSQL database (local or [Neon](https://neon.tech))
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone <your-repo-url>
+cd team-task-manager-backend
 ```
 
-## Run tests
+### 2. Install Dependencies
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
+### 3. Configure Environment Variables
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Create a `.env` file in the project root:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```env
+# Database (PostgreSQL / Neon)
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+
+# JWT
+JWT_SECRET=your_super_secret_key_here
+JWT_EXPIRES_IN=7d
+
+# App
+PORT=5000
+NODE_ENV=development
+```
+
+### 4. Run the Application
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Development (with hot reload)
+npm run start:dev
+
+# Production
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+The app will be available at **http://localhost:5000**
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🌐 Application Pages
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+| Route | Description | Auth Required |
+|---|---|---|
+| `GET /login` | Login page | No |
+| `GET /signup` | Register page | No |
+| `GET /` | Dashboard | Yes |
+| `GET /projects` | All projects | Yes |
+| `GET /projects/:id` | Project details + members | Yes |
+| `GET /tasks` | Task list | Yes |
+| `GET /logout` | Logout | Yes |
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 📡 REST API Endpoints
 
-## Stay in touch
+Full Swagger documentation is available at:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```
+http://localhost:5000/api/docs
+```
 
-## License
+### Auth
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/auth/signup` | Register a new user |
+| `POST` | `/api/auth/login` | Login & get JWT token |
+| `GET` | `/api/auth/me` | Get current user profile |
+
+### Projects
+
+| Method | Endpoint | Description | Role |
+|---|---|---|---|
+| `POST` | `/api/projects` | Create a project | Admin |
+| `GET` | `/api/projects` | List all/member projects | Both |
+| `POST` | `/api/projects/:id/members` | Add member to project | Admin |
+| `DELETE` | `/api/projects/:id/members/:userId` | Remove member | Admin |
+
+### Tasks
+
+| Method | Endpoint | Description | Role |
+|---|---|---|---|
+| `POST` | `/api/tasks` | Create a task | Admin |
+| `GET` | `/api/tasks` | List tasks | Both |
+| `PATCH` | `/api/tasks/:id/status` | Update task status | Both* |
+| `GET` | `/api/tasks/overdue/list` | Get overdue tasks | Both |
+
+> *Members can only update tasks assigned to them.
+
+### Users
+
+| Method | Endpoint | Description | Role |
+|---|---|---|---|
+| `GET` | `/api/users` | List all users | Admin |
+| `GET` | `/api/users/:id` | Get user by ID | Admin |
+| `DELETE` | `/api/users/:id` | Delete a user | Admin |
+
+### Dashboard
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/dashboard` | Get dashboard stats |
+
+---
+
+## 🔐 Authentication Flow
+
+1. User registers via `/signup` (selects role: **Admin** or **Member**)
+2. On login, server issues a **JWT stored as an HTTP-only cookie**
+3. The `AuthMiddleware` reads the cookie on every request and attaches the decoded user to `res.locals.user`
+4. Protected routes check `res.locals.user` — unauthenticated users are redirected to `/login`
+5. Role-based actions are enforced both in the **UI** (buttons hidden) and **server-side** (redirects with error messages)
+
+---
+
+## 🗄️ Database Schema
+
+### `users`
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| name | VARCHAR | |
+| email | VARCHAR | Unique, indexed |
+| password | VARCHAR | bcrypt hashed |
+| role | ENUM | `ADMIN` / `MEMBER` |
+| createdAt | TIMESTAMP | Auto |
+| deletedAt | TIMESTAMP | Soft delete |
+
+### `projects`
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| name | VARCHAR | |
+| description | TEXT | Nullable |
+| createdBy | FK → users | |
+| createdAt | TIMESTAMP | Auto |
+
+### `project_members`
+| Column | Type | Notes |
+|---|---|---|
+| projectId | FK → projects | Composite PK |
+| userId | FK → users | Composite PK |
+
+### `tasks`
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| title | VARCHAR | |
+| description | TEXT | Nullable |
+| status | ENUM | `TODO` / `IN_PROGRESS` / `DONE` |
+| priority | ENUM | `LOW` / `MEDIUM` / `HIGH` |
+| dueDate | TIMESTAMP | |
+| assignedTo | FK → users | Must be a project member |
+| createdBy | FK → users | |
+| project | FK → projects | Cascade delete |
+
+---
+
+## 🎨 UI Highlights
+
+- **Role-based UI** — Admins see "Create Project", "Create Task", and "Add Member" buttons; Members see only their relevant data
+- **Dynamic Task Assignment** — Selecting a project in "Create Task" dynamically loads only that project's members via a fetch API call
+- **Overdue Detection** — Tasks past their due date are highlighted in red with an "OVERDUE" badge
+- **Flash Messages** — Success and error messages are displayed via URL query params after every form action
+- **Chart.js Dashboard** — A doughnut chart visualizes task completion breakdown
+- **Responsive Design** — Mobile-friendly sidebar with hamburger menu toggle
+
+---
+
+## 🧪 Development Commands
+
+```bash
+# Start with hot reload
+npm run start:dev
+
+# Lint & auto-fix
+npm run lint
+
+# Format code
+npm run format
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+```
+
+---
+
+## 📝 Notes
+
+- **TypeORM `synchronize: true`** is enabled — the database schema auto-syncs on startup. Disable this in production and use migrations instead.
+- The app uses **Neon PostgreSQL** (serverless) by default. Any standard PostgreSQL connection string works.
+- JWT is stored as an **HTTP-only cookie** — it is not accessible via JavaScript, providing XSS protection.
+- The global `ValidationPipe` with `whitelist: true` strips unknown properties from API request bodies.
+
+---
+
+## 📄 License
+
+This project is **UNLICENSED** — created as a college/assignment project.
+
+---
+
+*Built with ❤️ using NestJS, TypeORM, and Bootstrap.*

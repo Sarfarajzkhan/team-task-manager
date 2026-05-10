@@ -27,5 +27,16 @@
 
   <%- include('../partials/scripts') %>
 
+  <script>
+    // Forcefully clear any lingering overlays or backdrops on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const overlays = document.querySelectorAll('.sidebar-overlay, .modal-backdrop');
+      overlays.forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    });
+  </script>
+
 </body>
 </html>

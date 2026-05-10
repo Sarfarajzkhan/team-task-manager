@@ -1,3 +1,20 @@
+<%# Flash messages from redirect query params %>
+<% const errorMsg = (typeof locals.error !== 'undefined' && locals.error) ? locals.error : (typeof query !== 'undefined' && query && query.error) ? query.error : null; %>
+<% const successMsg = (typeof locals.success !== 'undefined' && locals.success) ? locals.success : (typeof query !== 'undefined' && query && query.success) ? query.success : null; %>
+
+<% if (errorMsg) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= errorMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+<% if (successMsg) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= successMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
 <div class="project-details-header">
 
   <div>
@@ -7,28 +24,37 @@
     </h2>
 
     <p class="dashboard-subtitle">
-      <%= project.description %>
+      <%= project.description || 'No description provided.' %>
     </p>
 
   </div>
+
+  <% if (locals.user && locals.user.role === 'ADMIN') { %>
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#addMemberModal"
+    >
+      <i class="bi bi-person-plus"></i>
+      Add Member
+    </button>
+  <% } %>
 
 </div>
 
 <div class="row mt-4">
 
   <!-- Members -->
-
   <div class="col-lg-4">
 
     <div class="dashboard-card">
 
       <h5 class="mb-4">
         Team Members
+        <span class="badge bg-primary ms-2"><%= project.members.length %></span>
       </h5>
 
-      <% if (
-      project.members.length > 0
-      ) { %>
+      <% if (project.members && project.members.length > 0) { %>
 
         <% project.members.forEach(member => { %>
 
@@ -40,13 +66,13 @@
               : '?' %>
             </div>
 
-            <div>
+            <div style="flex:1">
 
               <strong>
                 <%= (member.user && member.user.name) ? member.user.name : 'Unknown User' %>
               </strong>
 
-              <div class="text-muted">
+              <div class="text-muted" style="font-size:13px">
                 <%= (member.user && member.user.email) ? member.user.email : 'No Email' %>
               </div>
 
@@ -59,7 +85,7 @@
       <% } else { %>
 
         <p class="text-muted">
-          No members added.
+          No members added yet.
         </p>
 
       <% } %>
@@ -69,7 +95,6 @@
   </div>
 
   <!-- Project Stats -->
-
   <div class="col-lg-8">
 
     <div class="dashboard-card">
@@ -87,8 +112,22 @@
             <h6>Members</h6>
 
             <h3>
-              <%= project.members.length %>
+              <%= project.members ? project.members.length : 0 %>
             </h3>
+
+          </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+          <div class="mini-stat-card">
+
+            <h6>Created By</h6>
+
+            <h6>
+              <%= (project.createdBy && project.createdBy.name) ? project.createdBy.name : 'N/A' %>
+            </h6>
 
           </div>
 
@@ -101,8 +140,7 @@
             <h6>Created</h6>
 
             <h6>
-              <%= new Date(project.createdAt)
-              .toLocaleDateString() %>
+              <%= new Date(project.createdAt).toLocaleDateString() %>
             </h6>
 
           </div>
@@ -116,3 +154,109 @@
   </div>
 
 </div>
+
+<!-- Add Member Modal (Admin Only) -->
+<% if (locals.user && locals.user.role === 'ADMIN') { %>
+
+<div
+  class="modal fade"
+  id="addMemberModal"
+  tabindex="-1"
+>
+
+  <div class="modal-dialog">
+
+    <div class="modal-content modern-modal">
+
+      <div class="modal-header">
+
+        <h5 class="modal-title">
+          Add Member to Project
+        </h5>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+
+      </div>
+
+      <form
+        action="/projects/<%= project.id %>/add-member"
+        method="POST"
+      >
+
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Select User</label>
+
+            <select
+              name="userId"
+              class="form-select"
+              required
+            >
+              <option value="" disabled selected>-- Select a user --</option>
+
+              <% if (locals.allUsers && allUsers.length > 0) { %>
+
+                <% const memberIds = project.members ? project.members.map(m => m.user ? m.user.id : null) : []; %>
+
+                <% allUsers.forEach(u => { %>
+                  <% if (!memberIds.includes(u.id)) { %>
+                    <option value="<%= u.id %>">
+                      <%= u.name %> (<%= u.email %>)
+                    </option>
+                  <% } %>
+                <% }) %>
+
+              <% } else { %>
+                <option disabled>No users available to add</option>
+              <% } %>
+
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            Add Member
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+
+<% } %>
+
+<script>
+// Read query params and show alerts
+const urlParams = new URLSearchParams(window.location.search);
+const pageError = urlParams.get('error');
+const pageSuccess = urlParams.get('success');
+
+if (pageError) {
+  const el = document.createElement('div');
+  el.className = 'alert alert-danger alert-dismissible fade show mt-3';
+  el.innerHTML = pageError + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  document.body.prepend(el);
+}
+if (pageSuccess) {
+  const el = document.createElement('div');
+  el.className = 'alert alert-success alert-dismissible fade show mt-3';
+  el.innerHTML = pageSuccess + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  document.body.prepend(el);
+}
+</script>
