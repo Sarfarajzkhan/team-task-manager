@@ -6,7 +6,13 @@ import {
   Req,
   Res,
   Param,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 import type { Request, Response } from 'express';
 
@@ -26,6 +32,7 @@ import { ProjectsService } from '../projects/projects.service';
 import { TasksService } from '../tasks/tasks.service';
 
 import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
 @Controller()
 export class WebController {
   constructor(
@@ -38,6 +45,7 @@ export class WebController {
   private readonly tasksService: TasksService,
 
   private readonly usersService: UsersService,
+  private readonly notificationsService: NotificationsService,
 ) {}
 
   /*
@@ -438,8 +446,44 @@ UPDATE TASK STATUS
 ===========================================
 */
 
-@Post('/tasks/:id/status')
-async updateTaskStatus(
+/*
+===========================================
+TASK DETAIL PAGE
+===========================================
+*/
+
+@Get('/tasks/:id')
+async taskDetail(
+  @Param('id') id: string,
+  @Req() req: Request,
+  @Res() res: Response,
+) {
+  const user = (req as any).res.locals.user;
+  if (!user) return res.redirect('/login');
+
+  try {
+    const task = await this.tasksService.getTaskById(id, user);
+    return res.render('tasks/detail', {
+      title: task.title,
+      task,
+      user,
+      error: (req as any).query?.error || null,
+      success: (req as any).query?.success || null,
+    });
+  } catch (error) {
+    console.error('Task Detail Error:', error);
+    return res.redirect('/tasks?error=' + encodeURIComponent(error.message));
+  }
+}
+
+/*
+===========================================
+ADD COMMENT TO TASK
+===========================================
+*/
+
+@Post('/tasks/:id/comment')
+async addComment(
   @Param('id') id: string,
   @Body() body: any,
   @Req() req: Request,
@@ -449,15 +493,97 @@ async updateTaskStatus(
   if (!user) return res.redirect('/login');
 
   try {
+    await this.tasksService.addComment(id, body.content, user);
+    return res.redirect(`/tasks/${id}?success=Comment+added`);
+  } catch (error) {
+    console.error('Add Comment Error:', error);
+    return res.redirect(`/tasks/${id}?error=` + encodeURIComponent(error.message));
+  }
+}
+
+/*
+===========================================
+UPDATE TASK STATUS
+===========================================
+*/
+
+  @Post('/tasks/:id/status')
+  async updateTaskStatus(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    console.log(`WebController: updateTaskStatus for task ${id}, body:`, body);
+    const user = (req as any).res.locals.user;
+    if (!user) return res.redirect('/login');
+
+  try {
     await this.tasksService.updateTaskStatus(
       id,
       body as UpdateTaskStatusDto,
       user,
     );
-    return res.redirect('/tasks?success=Status+updated');
+    return res.redirect(`/tasks/${id}?success=Status+updated+successfully`);
   } catch (error) {
     console.error('Update Task Status Error:', error);
+    return res.redirect(`/tasks/${id}?error=` + encodeURIComponent(error.message));
+  }
+}
+
+/*
+===========================================
+DELETE TASK
+===========================================
+*/
+
+@Post('/tasks/:id/delete')
+async deleteTask(
+  @Param('id') id: string,
+  @Req() req: Request,
+  @Res() res: Response,
+) {
+  const user = (req as any).res.locals.user;
+  if (!user) return res.redirect('/login');
+
+  if (user.role !== 'ADMIN') {
+    return res.redirect('/tasks?error=Only+admins+can+delete+tasks');
+  }
+
+  try {
+    await this.tasksService.deleteTask(id, user);
+    return res.redirect('/tasks?success=Task+deleted+successfully');
+  } catch (error) {
+    console.error('Delete Task Error:', error);
     return res.redirect('/tasks?error=' + encodeURIComponent(error.message));
+  }
+}
+
+/*
+===========================================
+DELETE PROJECT
+===========================================
+*/
+
+@Post('/projects/:id/delete')
+async deleteProject(
+  @Param('id') id: string,
+  @Req() req: Request,
+  @Res() res: Response,
+) {
+  const user = (req as any).res.locals.user;
+  if (!user) return res.redirect('/login');
+
+  if (user.role !== 'ADMIN') {
+    return res.redirect('/projects?error=Only+admins+can+delete+projects');
+  }
+
+  try {
+    await this.projectsService.deleteProject(id, user);
+    return res.redirect('/projects?success=Project+deleted+successfully');
+  } catch (error) {
+    console.error('Delete Project Error:', error);
+    return res.redirect('/projects?error=' + encodeURIComponent(error.message));
   }
 }
 
@@ -478,31 +604,95 @@ async getProjectMembers(
 
   try {
     const project = await this.projectsService.getProjectById(projectId);
-    const members = project.members.map(m => ({
-      id: m.user.id,
-      name: m.user.name,
-      email: m.user.email,
-    }));
+    const members = (project.members || [])
+      .filter(m => m && m.user)
+      .map(m => ({
+        id: m.user.id,
+        name: m.user.name,
+        email: m.user.email,
+      }));
     res.json(members);
     return;
   } catch (error) {
-    res.status(404).json({ error: 'Project not found' });
+    console.error('getProjectMembers error:', error);
+    res.status(404).json({ error: 'Project not found or error loading members' });
     return;
   }
 }
 
-/*
-===========================================
-404 PAGE
-===========================================
-*/
 
-@Get('*')
-notFound(
-  @Res() res: Response,
-) {
-  return res.status(404).render(
-    '404',
-  );
-}
+  /*
+  ===========================================
+  NOTIFICATIONS PAGE
+  ===========================================
+  */
+
+  @Get('/notifications')
+  async notificationsPage(
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const user = (req as any).res.locals.user;
+    if (!user) return res.redirect('/login');
+
+    const notifications = await this.notificationsService.getForUser(user);
+    await this.notificationsService.markAllAsRead(user);
+
+    return res.render('notifications/index', {
+      title: 'Notifications',
+      notifications,
+      user,
+    });
+  }
+
+  /*
+  ===========================================
+  FILE UPLOAD
+  ===========================================
+  */
+
+  @Post('/tasks/:id/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './public/uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  async uploadAttachment(
+    @Param('id') id: string,
+    @UploadedFile() file: any,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const user = (req as any).res.locals.user;
+    if (!user) return res.redirect('/login');
+
+    if (!file) {
+      return res.redirect(`/tasks/${id}?error=No+file+uploaded`);
+    }
+
+    try {
+      await this.tasksService.addAttachment(id, file, user);
+      return res.redirect(`/tasks/${id}?success=File+uploaded+successfully`);
+    } catch (error) {
+      console.error('File Upload Error:', error);
+      return res.redirect(`/tasks/${id}?error=` + encodeURIComponent(error.message));
+    }
+  }
+
+  /*
+  ===========================================
+  404 PAGE
+  ===========================================
+  */
+
+  @Get('*')
+  notFound(@Res() res: Response) {
+    return res.status(404).render('404');
+  }
 }

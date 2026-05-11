@@ -62,6 +62,10 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
+  const express = require('express');
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
   app.enableCors();
 
   /*

@@ -199,6 +199,10 @@ export class ProjectsService {
           members: {
             user: true,
           },
+          tasks: {
+            assignedTo: true,
+          },
+          createdBy: true,
         },
       });
 
@@ -225,5 +229,28 @@ export class ProjectsService {
       });
 
     return projects;
+  }
+
+  async deleteProject(
+    projectId: string,
+    currentUser: User,
+  ) {
+    if (currentUser.role !== Role.ADMIN) {
+      throw new ForbiddenException(
+        'Only admins can delete projects',
+      );
+    }
+
+    const project = await this.projectRepository.findOne({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    await this.projectRepository.remove(project);
+
+    return { message: 'Project deleted successfully' };
   }
 }

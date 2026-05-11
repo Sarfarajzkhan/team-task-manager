@@ -111,6 +111,37 @@ export class DashboardService {
               100,
           );
 
+    const projects = await this.projectRepository.find({
+      relations: ['members', 'members.user', 'tasks', 'tasks.assignedTo'],
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    const projectSummaries = projects.map((project) => {
+      const total = project.tasks.length;
+      const completed = project.tasks.filter(
+        (t) => t.status === TaskStatus.DONE,
+      ).length;
+      const inProgress = project.tasks.filter(
+        (t) => t.status === TaskStatus.IN_PROGRESS,
+      ).length;
+      const pending = project.tasks.filter(
+        (t) => t.status === TaskStatus.TODO,
+      ).length;
+
+      return {
+        id: project.id,
+        name: project.name,
+        totalTasks: total,
+        completedTasks: completed,
+        inProgressTasks: inProgress,
+        pendingTasks: pending,
+        progress: total === 0 ? 0 : Math.round((completed / total) * 100),
+        members: project.members.map((m) => m.user.name),
+      };
+    });
+
     return {
       role: currentUser.role,
 
@@ -123,13 +154,14 @@ export class DashboardService {
 
         inProgressTasks,
 
-        overdueTasksCount:
-          overdueTasks.length,
+        overdueTasksCount: overdueTasks.length,
 
         totalProjects,
 
         completionRate,
       },
+
+      projectSummaries,
 
       overdueTasks,
 

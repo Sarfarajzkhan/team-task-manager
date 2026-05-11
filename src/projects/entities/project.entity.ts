@@ -11,6 +11,7 @@ import {
 import { User } from '../../users/entities/user.entity';
 
 import { ProjectMember } from './project-member.entity';
+import { Task } from '../../tasks/entities/task.entity';
 
 @Entity('projects')
 export class Project {
@@ -36,6 +37,9 @@ export class Project {
     (projectMember) => projectMember.project,
   )
   members: ProjectMember[];
+
+  @OneToMany(() => Task, (task) => task.project)
+  tasks: Task[];
 
   @CreateDateColumn()
   createdAt: Date;

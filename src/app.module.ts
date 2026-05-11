@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { WebModule } from './web/web.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { WebModule } from './web/web.module';
     ProjectsModule,
     TasksModule,
     DashboardModule,
+    NotificationsModule,
     WebModule,
   ],
 })

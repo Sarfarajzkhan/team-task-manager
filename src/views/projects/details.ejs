@@ -54,6 +54,13 @@
         <span class="badge bg-primary ms-2"><%= project.members.length %></span>
       </h5>
 
+      <% if (locals.user && locals.user.role === 'ADMIN') { %>
+        <div class="alert mb-3" style="background:rgba(139,92,246,0.10);border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-size:13px;padding:10px 14px;">
+          <i class="bi bi-info-circle me-2" style="color:#8b5cf6;"></i>
+          <strong>How to add members:</strong> Signed-up users are <em>not</em> automatically added to a project. Use the <strong>"Add Member"</strong> button above to select and add a user.
+        </div>
+      <% } %>
+
       <% if (project.members && project.members.length > 0) { %>
 
         <% project.members.forEach(member => { %>
@@ -86,6 +93,9 @@
 
         <p class="text-muted">
           No members added yet.
+          <% if (locals.user && locals.user.role === 'ADMIN') { %>
+            <br><small>Click <strong>"Add Member"</strong> above to add project members.</small>
+          <% } %>
         </p>
 
       <% } %>
@@ -153,6 +163,78 @@
 
   </div>
 
+</div>
+
+<!-- Project Tasks -->
+<div class="dashboard-card mt-4">
+  <h5 class="mb-4">Project Tasks</h5>
+  <div class="table-responsive">
+    <table class="table modern-table">
+      <thead>
+        <tr>
+          <th>Task Title</th>
+          <th>Assigned To</th>
+          <th>Priority</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (project.tasks && project.tasks.length > 0) { %>
+          <% project.tasks.forEach(task => { %>
+            <tr>
+              <td><%= task.title %></td>
+              <td>
+                <% if (task.assignedTo) { %>
+                  <div class="d-flex align-items-center">
+                    <div class="member-avatar-sm me-2">
+                      <%= task.assignedTo.name.charAt(0).toUpperCase() %>
+                    </div>
+                    <%= task.assignedTo.name %>
+                  </div>
+                <% } else { %>
+                  <span class="text-muted">Unassigned</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="badge priority-badge <%= task.priority %>">
+                  <%= task.priority %>
+                </span>
+              </td>
+              <td><%= new Date(task.dueDate).toLocaleDateString() %></td>
+              <td>
+                <% const canUpdate = locals.user && (locals.user.role === 'ADMIN' || (task.assignedTo && String(task.assignedTo.id) === String(locals.user.id))); %>
+                <% if (canUpdate) { %>
+                  <form action="/tasks/<%= task.id %>/status" method="POST" class="d-flex align-items-center gap-1">
+                    <select name="status" class="form-select form-select-sm" style="min-width:110px;">
+                      <option value="TODO" <%= task.status === 'TODO' ? 'selected' : '' %>>TODO</option>
+                      <option value="IN_PROGRESS" <%= task.status === 'IN_PROGRESS' ? 'selected' : '' %>>IN_PROGRESS</option>
+                      <option value="DONE" <%= task.status === 'DONE' ? 'selected' : '' %>>DONE</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary" title="Save Status">Save</button>
+                  </form>
+                <% } else { %>
+                  <span class="badge status-badge <%= task.status %>">
+                    <%= task.status %>
+                  </span>
+                <% } %>
+              </td>
+              <td>
+                <a href="/tasks/<%= task.id %>" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye"></i>
+                </a>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No tasks in this project yet.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Add Member Modal (Admin Only) -->
