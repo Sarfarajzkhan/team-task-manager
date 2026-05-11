@@ -1,0 +1,281 @@
+<%
+  const errorMsg = (typeof locals.error !== 'undefined' && locals.error) ? locals.error : null;
+  const successMsg = (typeof locals.success !== 'undefined' && locals.success) ? locals.success : null;
+  const canUpdate = locals.user && (
+    locals.user.role === 'ADMIN' ||
+    (task.assignedTo && String(task.assignedTo.id) === String(locals.user.id))
+  );
+%>
+
+<% if (errorMsg) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i><%= errorMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+<% if (successMsg) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i><%= successMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<!-- Back Button -->
+<div class="mb-4">
+  <a href="/tasks" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back to Tasks
+  </a>
+</div>
+
+<!-- Task Header -->
+<div class="dashboard-card mb-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <h2 class="dashboard-title mb-1"><%= task.title %></h2>
+      <p class="dashboard-subtitle mb-2"><%= task.description || 'No description provided.' %></p>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="badge status-badge <%= task.status %>"><%= task.status %></span>
+        <span class="badge priority-badge <%= task.priority %>"><%= task.priority %></span>
+        <% if (new Date(task.dueDate) < new Date() && task.status !== 'DONE') { %>
+          <span class="badge bg-danger">OVERDUE</span>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (canUpdate) { %>
+    <div>
+      <form action="/tasks/<%= task.id %>/status" method="POST" class="d-flex align-items-center gap-2">
+        <label class="fw-semibold text-muted" style="font-size:13px; white-space:nowrap;">Update Status:</label>
+        <select name="status" class="form-select form-select-sm" style="min-width:150px;">
+          <option value="TODO" <%= task.status === 'TODO' ? 'selected' : '' %>>📋 TODO</option>
+          <option value="IN_PROGRESS" <%= task.status === 'IN_PROGRESS' ? 'selected' : '' %>>🔄 IN PROGRESS</option>
+          <option value="DONE" <%= task.status === 'DONE' ? 'selected' : '' %>>✅ DONE</option>
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary">Save Status</button>
+      </form>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Task Meta Info -->
+<div class="row mb-4 g-3">
+
+  <div class="col-md-3">
+    <div class="dashboard-card text-center py-3">
+      <div class="text-muted mb-1" style="font-size:12px; text-transform:uppercase; letter-spacing:1px;">Assigned To</div>
+      <div class="member-avatar mx-auto mb-2" style="width:40px;height:40px;font-size:16px;">
+        <%= task.assignedTo ? task.assignedTo.name.charAt(0).toUpperCase() : '?' %>
+      </div>
+      <strong style="font-size:14px;"><%= task.assignedTo ? task.assignedTo.name : 'Unassigned' %></strong>
+      <div class="text-muted" style="font-size:12px;"><%= task.assignedTo ? task.assignedTo.email : '' %></div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="dashboard-card text-center py-3">
+      <div class="text-muted mb-1" style="font-size:12px; text-transform:uppercase; letter-spacing:1px;">Created By</div>
+      <div class="member-avatar mx-auto mb-2" style="width:40px;height:40px;font-size:16px;background:var(--accent-secondary,#6366f1);">
+        <%= task.createdBy ? task.createdBy.name.charAt(0).toUpperCase() : '?' %>
+      </div>
+      <strong style="font-size:14px;"><%= task.createdBy ? task.createdBy.name : 'N/A' %></strong>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="dashboard-card text-center py-3">
+      <div class="text-muted mb-1" style="font-size:12px; text-transform:uppercase; letter-spacing:1px;">Project</div>
+      <i class="bi bi-folder2-open" style="font-size:24px; color:var(--accent-primary,#8b5cf6);"></i>
+      <div class="mt-2"><strong style="font-size:14px;"><%= task.project ? task.project.name : 'N/A' %></strong></div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="dashboard-card text-center py-3">
+      <div class="text-muted mb-1" style="font-size:12px; text-transform:uppercase; letter-spacing:1px;">Due Date</div>
+      <i class="bi bi-calendar3" style="font-size:24px; color:<%= new Date(task.dueDate) < new Date() && task.status !== 'DONE' ? '#ef4444' : 'var(--accent-primary,#8b5cf6)' %>;"></i>
+      <div class="mt-2">
+        <strong style="font-size:14px;"><%= new Date(task.dueDate).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) %></strong>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Files Section -->
+<div class="dashboard-card mb-4">
+  <h5 class="mb-4">
+    <i class="bi bi-paperclip me-2" style="color:var(--accent-primary,#8b5cf6);"></i>
+    Attachments
+    <span class="badge bg-secondary ms-2" style="font-size:12px;"><%= (task.attachments || []).length %></span>
+  </h5>
+
+  <!-- File List -->
+  <% if (task.attachments && task.attachments.length > 0) { %>
+    <div class="row g-3 mb-4">
+      <% task.attachments.forEach(file => { %>
+        <div class="col-md-6 col-lg-4">
+          <div class="file-card p-2 border rounded d-flex align-items-center gap-2">
+            <div class="file-icon bg-light p-2 rounded">
+              <% if (file.mimeType.startsWith('image/')) { %>
+                <i class="bi bi-image text-primary"></i>
+              <% } else if (file.mimeType.includes('pdf')) { %>
+                <i class="bi bi-file-earmark-pdf text-danger"></i>
+              <% } else { %>
+                <i class="bi bi-file-earmark text-muted"></i>
+              <% } %>
+            </div>
+            <div class="overflow-hidden">
+              <div class="text-truncate fw-semibold" style="font-size:13px;" title="<%= file.originalName %>">
+                <%= file.originalName %>
+              </div>
+              <div class="text-muted" style="font-size:11px;">
+                <%= (file.size / 1024).toFixed(1) %> KB
+              </div>
+            </div>
+            <a href="/uploads/<%= file.filename %>" target="_blank" class="ms-auto btn btn-sm btn-light">
+              <i class="bi bi-download"></i>
+            </a>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="empty-state py-3 mb-4">
+      <p class="text-muted small mb-0">No files attached to this task.</p>
+    </div>
+  <% } %>
+
+  <!-- Upload Form -->
+  <% if (canUpdate) { %>
+    <div class="border-top pt-3">
+      <form action="/tasks/<%= task.id %>/upload" method="POST" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+        <input type="file" name="file" class="form-control form-control-sm" required>
+        <button type="submit" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-upload me-1"></i> Upload
+        </button>
+      </form>
+    </div>
+  <% } %>
+</div>
+
+<style>
+.file-card { transition: 0.2s; background: rgba(0,0,0,0.01); }
+.file-card:hover { background: rgba(0,0,0,0.03); border-color: var(--accent-primary) !important; }
+</style>
+
+<!-- Comments Section -->
+<div class="dashboard-card">
+  <h5 class="mb-4">
+    <i class="bi bi-chat-dots me-2" style="color:var(--accent-primary,#8b5cf6);"></i>
+    Comments
+    <span class="badge bg-secondary ms-2" style="font-size:12px;"><%= (task.comments || []).length %></span>
+  </h5>
+
+  <!-- Comment List -->
+  <% if (task.comments && task.comments.length > 0) { %>
+    <div class="mb-4" id="comments-list">
+      <% task.comments.slice().reverse().forEach(comment => { %>
+        <div class="comment-item d-flex gap-3 mb-3">
+          <div class="member-avatar flex-shrink-0" style="width:36px;height:36px;font-size:14px;">
+            <%= comment.author ? comment.author.name.charAt(0).toUpperCase() : '?' %>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <strong style="font-size:14px;"><%= comment.author ? comment.author.name : 'Unknown' %></strong>
+              <span class="text-muted" style="font-size:12px;">
+                <%= new Date(comment.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }) %>
+              </span>
+            </div>
+            <div class="comment-body" style="
+              background: rgba(139,92,246,0.07);
+              border-left: 3px solid var(--accent-primary,#8b5cf6);
+              border-radius: 0 8px 8px 0;
+              padding: 10px 14px;
+              font-size: 14px;
+              line-height: 1.6;
+              white-space: pre-wrap;
+            "><%= comment.content %></div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="empty-state py-4 mb-4" id="no-comments">
+      <i class="bi bi-chat-square-text" style="font-size:2rem;"></i>
+      <p class="mt-2 mb-0">No comments yet. Be the first to add one!</p>
+    </div>
+  <% } %>
+
+  <!-- Add Comment Form — available to admin and the assigned user -->
+  <% if (canUpdate) { %>
+  <div class="border-top pt-4">
+    <h6 class="mb-3 fw-semibold">Add a Comment</h6>
+    <form action="/tasks/<%= task.id %>/comment" method="POST" id="commentForm">
+      <div class="mb-3">
+        <textarea
+          name="content"
+          id="commentContent"
+          class="form-control"
+          rows="4"
+          placeholder="Write your comment, progress update, or any issue here..."
+          required
+          style="resize:vertical;"
+        ></textarea>
+      </div>
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary" id="submitCommentBtn">
+          <i class="bi bi-send me-1"></i> Post Comment
+        </button>
+      </div>
+    </form>
+  </div>
+  <% } else { %>
+    <div class="alert alert-info mb-0">
+      <i class="bi bi-info-circle me-2"></i>
+      Only the assigned team member or an admin can add comments to this task.
+    </div>
+  <% } %>
+</div>
+
+<script>
+// Read query params and show alerts
+const urlParams = new URLSearchParams(window.location.search);
+const pageError = urlParams.get('error');
+const pageSuccess = urlParams.get('success');
+
+if (pageError && !document.querySelector('.alert-danger')) {
+  const mainContent = document.querySelector('.main-content') || document.body;
+  const el = document.createElement('div');
+  el.className = 'alert alert-danger alert-dismissible fade show';
+  el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + decodeURIComponent(pageError) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  mainContent.prepend(el);
+}
+if (pageSuccess && !document.querySelector('.alert-success')) {
+  const mainContent = document.querySelector('.main-content') || document.body;
+  const el = document.createElement('div');
+  el.className = 'alert alert-success alert-dismissible fade show';
+  el.innerHTML = '<i class="bi bi-check-circle me-2"></i>' + decodeURIComponent(pageSuccess) + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  mainContent.prepend(el);
+}
+
+// Prevent double-submit on comment form
+const commentForm = document.getElementById('commentForm');
+const submitBtn = document.getElementById('submitCommentBtn');
+if (commentForm && submitBtn) {
+  commentForm.addEventListener('submit', () => {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Posting...';
+  });
+}
+</script>
+
+<style>
+.comment-item {
+  animation: fadeInUp 0.3s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>

@@ -1,0 +1,61 @@
+<aside
+  class="sidebar"
+  id="sidebar"
+>
+
+  <div class="logo-area">
+
+    <h3>
+      TaskManager
+    </h3>
+
+  </div>
+
+  <ul class="sidebar-menu">
+
+    <li>
+      <a href="/">
+        <i class="bi bi-grid"></i>
+        Dashboard
+      </a>
+    </li>
+
+    <li>
+      <a href="/projects">
+        <i class="bi bi-kanban"></i>
+        Projects
+      </a>
+    </li>
+
+    <li>
+      <a href="/tasks">
+        <i class="bi bi-list-task"></i>
+        Tasks
+      </a>
+    </li>
+
+    <li>
+      <a
+        href="/logout"
+        onclick="
+          return confirmAction(
+            'Logout from application?'
+          )
+        "
+      >
+        <i class="bi bi-box-arrow-right"></i>
+        Logout
+      </a>
+    </li>
+
+  </ul>
+
+</aside>
+
+<!-- 
+<div
+  class="sidebar-overlay"
+  id="sidebarOverlay"
+  onclick="toggleSidebar()"
+></div>
+-->

@@ -1,0 +1,70 @@
+
+<div class="auth-container">
+
+  <div class="auth-card">
+
+    <div class="auth-header">
+      <h2>Welcome Back</h2>
+
+      <p>
+        Login to continue managing your tasks.
+      </p>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-danger" role="alert">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <form
+      action="/login"
+      method="POST"
+      class="auth-form"
+    >
+
+      <div class="mb-3">
+        <label>Email</label>
+
+        <input
+          type="email"
+          name="email"
+          class="form-control"
+          placeholder="Enter email"
+          required
+        />
+      </div>
+
+      <div class="mb-4">
+        <label>Password</label>
+
+        <input
+          type="password"
+          name="password"
+          class="form-control"
+          placeholder="Enter password"
+          required
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-primary w-100"
+      >
+        Login
+      </button>
+
+    </form>
+
+    <div class="auth-footer">
+      <p>
+        Don't have an account?
+        <a href="/signup">
+          Signup
+        </a>
+      </p>
+    </div>
+
+  </div>
+
+</div>

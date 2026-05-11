@@ -1,0 +1,314 @@
+<div class="dashboard-header">
+
+  <div>
+    <h2 class="dashboard-title">
+      Welcome Back 👋
+    </h2>
+
+    <p class="dashboard-subtitle">
+      Here's your project overview.
+    </p>
+  </div>
+
+</div>
+
+<!-- Stats Cards -->
+
+<div class="row g-4 mt-2">
+
+  <div class="col-md-3">
+    <div class="dashboard-card">
+
+      <h6>Total Tasks</h6>
+
+      <h2>
+        <%= dashboardData.stats.totalTasks %>
+      </h2>
+
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="dashboard-card">
+
+      <h6>Completed</h6>
+
+      <h2>
+        <%= dashboardData.stats.completedTasks %>
+      </h2>
+
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="dashboard-card">
+
+      <h6>Pending</h6>
+
+      <h2>
+        <%= dashboardData.stats.pendingTasks %>
+      </h2>
+
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="dashboard-card">
+
+      <h6>Overdue</h6>
+
+      <h2 class="text-danger">
+        <%= dashboardData.stats.overdueTasksCount %>
+      </h2>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Progress + Chart -->
+
+<div class="row mt-5">
+
+  <div class="col-lg-6">
+
+    <div class="dashboard-card">
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5>
+          Completion Progress
+        </h5>
+
+        <span class="fw-bold">
+          <%= dashboardData.stats.completionRate %>%
+        </span>
+      </div>
+
+      <div class="progress modern-progress">
+
+        <div
+          class="progress-bar"
+          style="
+            width:
+            <%= dashboardData.stats.completionRate %>%
+          "
+        ></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="col-lg-6">
+
+    <div class="dashboard-card">
+
+      <h5 class="mb-4">
+        Tasks Overview
+      </h5>
+
+      <canvas id="tasksChart"></canvas>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Project Progress -->
+<% if (dashboardData.projectSummaries && dashboardData.projectSummaries.length > 0) { %>
+<div class="row mt-5">
+  <div class="col-12">
+    <div class="dashboard-card">
+      <h5 class="mb-4">Ongoing Projects Progress</h5>
+      <div class="row g-4">
+        <% dashboardData.projectSummaries.forEach(project => { %>
+          <div class="col-md-6 col-lg-4">
+            <div class="p-3 border rounded">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0 text-primary"><%= project.name %></h6>
+                <span class="badge bg-light text-dark"><%= project.progress %>%</span>
+              </div>
+              
+              <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar" style="width: <%= project.progress %>%;"></div>
+              </div>
+
+              <div class="d-flex justify-content-between text-muted small mb-3">
+                <span><%= project.completedTasks %> Completed</span>
+                <span><%= project.totalTasks %> Total</span>
+              </div>
+
+              <div class="members-list">
+                <div class="small fw-bold mb-1 text-muted">Members:</div>
+                <% if (project.members.length > 0) { %>
+                  <div class="d-flex flex-wrap gap-1">
+                    <% project.members.forEach(member => { %>
+                      <span class="badge rounded-pill bg-info text-white" style="font-size: 0.7rem;"><%= member %></span>
+                    <% }) %>
+                  </div>
+                <% } else { %>
+                  <span class="text-muted small italic">No members assigned</span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- Recent Tasks -->
+
+<div class="dashboard-card mt-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h5>
+      Recent Tasks
+    </h5>
+
+  </div>
+
+  <div class="table-responsive">
+
+    <table class="table modern-table">
+
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Due Date</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <% dashboardData.recentTasks.forEach(task => { %>
+
+          <tr>
+
+            <td>
+              <%= task.title %>
+            </td>
+
+            <td>
+
+              <span class="
+                badge
+                status-badge
+                <%= task.status %>
+              ">
+
+                <%= task.status %>
+
+              </span>
+
+            </td>
+
+            <td>
+
+              <span class="
+                badge
+                priority-badge
+                <%= task.priority %>
+              ">
+
+                <%= task.priority %>
+
+              </span>
+
+            </td>
+
+            <td>
+              <%= new Date(task.dueDate)
+              .toLocaleDateString() %>
+            </td>
+
+          </tr>
+
+        <% }) %>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+<!-- Overdue Tasks -->
+
+<% if (
+dashboardData.overdueTasks.length > 0
+) { %>
+
+<div class="dashboard-card mt-5">
+
+  <h5 class="text-danger mb-4">
+    Overdue Tasks
+  </h5>
+
+  <% dashboardData.overdueTasks.forEach(task => { %>
+
+    <div class="overdue-task">
+
+      <div>
+        <strong>
+          <%= task.title %>
+        </strong>
+      </div>
+
+      <div class="text-danger">
+        Due:
+        <%= new Date(task.dueDate)
+        .toLocaleDateString() %>
+      </div>
+
+    </div>
+
+  <% }) %>
+
+</div>
+
+<% } %>
+
+<!-- Chart JS -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx =
+    document
+      .getElementById('tasksChart');
+
+  new Chart(ctx, {
+    type: 'doughnut',
+
+    data: {
+      labels: [
+        'Completed',
+        'Pending',
+        'In Progress',
+      ],
+
+      datasets: [{
+        data: [
+          <%= dashboardData.stats.completedTasks %>,
+          <%= dashboardData.stats.pendingTasks %>,
+          <%= dashboardData.stats.inProgressTasks %>
+        ],
+
+        backgroundColor: [
+          '#10b981',
+          '#f59e0b',
+          '#3b82f6',
+        ],
+      }],
+    },
+  });
+</script>

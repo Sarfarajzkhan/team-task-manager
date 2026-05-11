@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('../partials/head') %>
+</head>
+
+<body>
+
+  <div class="app-container">
+
+    <%- include('../partials/sidebar') %>
+
+    <div class="main-wrapper">
+
+      <%- include('../partials/navbar') %>
+
+      <main class="main-content">
+        <%- body %>
+      </main>
+
+      <%- include('../partials/footer') %>
+
+    </div>
+
+  </div>
+
+  <%- include('../partials/scripts') %>
+
+  <script>
+    // Forcefully clear any lingering overlays or backdrops on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const overlays = document.querySelectorAll('.sidebar-overlay, .modal-backdrop');
+      overlays.forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    });
+  </script>
+
+</body>
+</html>

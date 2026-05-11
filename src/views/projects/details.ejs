@@ -1,0 +1,344 @@
+<%# Flash messages from redirect query params %>
+<% const errorMsg = (typeof locals.error !== 'undefined' && locals.error) ? locals.error : (typeof query !== 'undefined' && query && query.error) ? query.error : null; %>
+<% const successMsg = (typeof locals.success !== 'undefined' && locals.success) ? locals.success : (typeof query !== 'undefined' && query && query.success) ? query.success : null; %>
+
+<% if (errorMsg) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= errorMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+<% if (successMsg) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= successMsg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="project-details-header">
+
+  <div>
+
+    <h2 class="dashboard-title">
+      <%= project.name %>
+    </h2>
+
+    <p class="dashboard-subtitle">
+      <%= project.description || 'No description provided.' %>
+    </p>
+
+  </div>
+
+  <% if (locals.user && locals.user.role === 'ADMIN') { %>
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#addMemberModal"
+    >
+      <i class="bi bi-person-plus"></i>
+      Add Member
+    </button>
+  <% } %>
+
+</div>
+
+<div class="row mt-4">
+
+  <!-- Members -->
+  <div class="col-lg-4">
+
+    <div class="dashboard-card">
+
+      <h5 class="mb-4">
+        Team Members
+        <span class="badge bg-primary ms-2"><%= project.members.length %></span>
+      </h5>
+
+      <% if (locals.user && locals.user.role === 'ADMIN') { %>
+        <div class="alert mb-3" style="background:rgba(139,92,246,0.10);border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-size:13px;padding:10px 14px;">
+          <i class="bi bi-info-circle me-2" style="color:#8b5cf6;"></i>
+          <strong>How to add members:</strong> Signed-up users are <em>not</em> automatically added to a project. Use the <strong>"Add Member"</strong> button above to select and add a user.
+        </div>
+      <% } %>
+
+      <% if (project.members && project.members.length > 0) { %>
+
+        <% project.members.forEach(member => { %>
+
+          <div class="member-item">
+
+            <div class="member-avatar">
+              <%= (member.user && member.user.email)
+              ? member.user.email.charAt(0).toUpperCase()
+              : '?' %>
+            </div>
+
+            <div style="flex:1">
+
+              <strong>
+                <%= (member.user && member.user.name) ? member.user.name : 'Unknown User' %>
+              </strong>
+
+              <div class="text-muted" style="font-size:13px">
+                <%= (member.user && member.user.email) ? member.user.email : 'No Email' %>
+              </div>
+
+            </div>
+
+          </div>
+
+        <% }) %>
+
+      <% } else { %>
+
+        <p class="text-muted">
+          No members added yet.
+          <% if (locals.user && locals.user.role === 'ADMIN') { %>
+            <br><small>Click <strong>"Add Member"</strong> above to add project members.</small>
+          <% } %>
+        </p>
+
+      <% } %>
+
+    </div>
+
+  </div>
+
+  <!-- Project Stats -->
+  <div class="col-lg-8">
+
+    <div class="dashboard-card">
+
+      <h5 class="mb-4">
+        Project Overview
+      </h5>
+
+      <div class="row g-4">
+
+        <div class="col-md-4">
+
+          <div class="mini-stat-card">
+
+            <h6>Members</h6>
+
+            <h3>
+              <%= project.members ? project.members.length : 0 %>
+            </h3>
+
+          </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+          <div class="mini-stat-card">
+
+            <h6>Created By</h6>
+
+            <h6>
+              <%= (project.createdBy && project.createdBy.name) ? project.createdBy.name : 'N/A' %>
+            </h6>
+
+          </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+          <div class="mini-stat-card">
+
+            <h6>Created</h6>
+
+            <h6>
+              <%= new Date(project.createdAt).toLocaleDateString() %>
+            </h6>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Project Tasks -->
+<div class="dashboard-card mt-4">
+  <h5 class="mb-4">Project Tasks</h5>
+  <div class="table-responsive">
+    <table class="table modern-table">
+      <thead>
+        <tr>
+          <th>Task Title</th>
+          <th>Assigned To</th>
+          <th>Priority</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (project.tasks && project.tasks.length > 0) { %>
+          <% project.tasks.forEach(task => { %>
+            <tr>
+              <td><%= task.title %></td>
+              <td>
+                <% if (task.assignedTo) { %>
+                  <div class="d-flex align-items-center">
+                    <div class="member-avatar-sm me-2">
+                      <%= task.assignedTo.name.charAt(0).toUpperCase() %>
+                    </div>
+                    <%= task.assignedTo.name %>
+                  </div>
+                <% } else { %>
+                  <span class="text-muted">Unassigned</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="badge priority-badge <%= task.priority %>">
+                  <%= task.priority %>
+                </span>
+              </td>
+              <td><%= new Date(task.dueDate).toLocaleDateString() %></td>
+              <td>
+                <% const canUpdate = locals.user && (locals.user.role === 'ADMIN' || (task.assignedTo && String(task.assignedTo.id) === String(locals.user.id))); %>
+                <% if (canUpdate) { %>
+                  <form action="/tasks/<%= task.id %>/status" method="POST" class="d-flex align-items-center gap-1">
+                    <select name="status" class="form-select form-select-sm" style="min-width:110px;">
+                      <option value="TODO" <%= task.status === 'TODO' ? 'selected' : '' %>>TODO</option>
+                      <option value="IN_PROGRESS" <%= task.status === 'IN_PROGRESS' ? 'selected' : '' %>>IN_PROGRESS</option>
+                      <option value="DONE" <%= task.status === 'DONE' ? 'selected' : '' %>>DONE</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary" title="Save Status">Save</button>
+                  </form>
+                <% } else { %>
+                  <span class="badge status-badge <%= task.status %>">
+                    <%= task.status %>
+                  </span>
+                <% } %>
+              </td>
+              <td>
+                <a href="/tasks/<%= task.id %>" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye"></i>
+                </a>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No tasks in this project yet.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Member Modal (Admin Only) -->
+<% if (locals.user && locals.user.role === 'ADMIN') { %>
+
+<div
+  class="modal fade"
+  id="addMemberModal"
+  tabindex="-1"
+>
+
+  <div class="modal-dialog">
+
+    <div class="modal-content modern-modal">
+
+      <div class="modal-header">
+
+        <h5 class="modal-title">
+          Add Member to Project
+        </h5>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+
+      </div>
+
+      <form
+        action="/projects/<%= project.id %>/add-member"
+        method="POST"
+      >
+
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Select User</label>
+
+            <select
+              name="userId"
+              class="form-select"
+              required
+            >
+              <option value="" disabled selected>-- Select a user --</option>
+
+              <% if (locals.allUsers && allUsers.length > 0) { %>
+
+                <% const memberIds = project.members ? project.members.map(m => m.user ? m.user.id : null) : []; %>
+
+                <% allUsers.forEach(u => { %>
+                  <% if (!memberIds.includes(u.id)) { %>
+                    <option value="<%= u.id %>">
+                      <%= u.name %> (<%= u.email %>)
+                    </option>
+                  <% } %>
+                <% }) %>
+
+              <% } else { %>
+                <option disabled>No users available to add</option>
+              <% } %>
+
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            Add Member
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+
+<% } %>
+
+<script>
+// Read query params and show alerts
+const urlParams = new URLSearchParams(window.location.search);
+const pageError = urlParams.get('error');
+const pageSuccess = urlParams.get('success');
+
+if (pageError) {
+  const el = document.createElement('div');
+  el.className = 'alert alert-danger alert-dismissible fade show mt-3';
+  el.innerHTML = pageError + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  document.body.prepend(el);
+}
+if (pageSuccess) {
+  const el = document.createElement('div');
+  el.className = 'alert alert-success alert-dismissible fade show mt-3';
+  el.innerHTML = pageSuccess + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  document.body.prepend(el);
+}
+</script>

@@ -1,0 +1,60 @@
+<nav class="top-navbar">
+
+  <div class="d-flex align-items-center gap-3">
+
+    <button
+      class="mobile-menu-btn"
+      onclick="toggleSidebar()"
+    >
+      <i class="bi bi-list"></i>
+    </button>
+
+    <h4 class="page-title">
+      Team Task Manager
+    </h4>
+
+  </div>
+
+  <div class="profile-section d-flex align-items-center gap-4">
+    
+    <% if (locals.user) { %>
+      <!-- Theme Toggle -->
+      <button id="theme-toggle" class="btn btn-link text-decoration-none p-0 me-2" title="Toggle Theme">
+        <i class="bi bi-moon fs-5 text-muted"></i>
+      </button>
+
+      <!-- Notification Bell -->
+      <a href="/notifications" class="notification-bell position-relative text-decoration-none">
+        <i class="bi bi-bell fs-5 text-muted"></i>
+        <% if (locals.unreadCount > 0) { %>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 0.25rem 0.4rem;">
+            <%= locals.unreadCount > 9 ? '9+' : locals.unreadCount %>
+          </span>
+        <% } %>
+      </a>
+
+      <div class="d-flex align-items-center gap-3">
+
+        <div class="text-end">
+
+          <div class="fw-semibold">
+            <%= locals.user.email %>
+          </div>
+
+          <small class="text-muted">
+            <%= locals.user.role %>
+          </small>
+
+        </div>
+
+        <div class="profile-avatar">
+          <%= locals.user.email.charAt(0).toUpperCase() %>
+        </div>
+
+      </div>
+
+    <% } %>
+
+  </div>
+
+</nav>
